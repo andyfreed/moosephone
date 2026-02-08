@@ -1,110 +1,180 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { useAuth } from "@/lib/auth-context";
 
 interface PhoneEntry {
   id: string;
-  macAddress: string;
+  mac_address: string;
   model: string;
-  assignedTo: string;
-  extension: string;
+  assigned_to: string | null;
+  assigned_extension: string | null;
   status: "available" | "assigned" | "active";
 }
 
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
+  const router = useRouter();
 
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
+  const [loading, setLoading] = useState(false);
   const [newMac, setNewMac] = useState("");
   const [newModel, setNewModel] = useState("Standard");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<PhoneEntry>>({});
 
-  function handleLogin() {
-    // Simple client-side check for demo; in production use a proper auth system
-    if (password === "mooseadmin") {
-      setAuthenticated(true);
-      setAuthError("");
-    } else {
-      setAuthError("Invalid password");
-    }
-  }
+  const getAuthHeaders = useCallback(async () => {
+    const { getSupabaseClient } = await import("@/lib/supabase");
+    const supabase = getSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return {
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      "Content-Type": "application/json",
+    };
+  }, []);
 
-  function addPhone() {
+  const fetchPhones = useCallback(async () => {
+    setLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/phones", { headers });
+      if (!res.ok) throw new Error("Failed to load phones");
+      const data = await res.json();
+      setPhones(data);
+    } catch {
+      setPhones([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    if (!authLoading && user && isAdmin) {
+      fetchPhones();
+    }
+  }, [authLoading, user, isAdmin, fetchPhones]);
+
+  async function addPhone() {
     const mac = newMac.trim().toUpperCase();
     if (!mac) return;
 
-    // Basic MAC address format validation
     const macRegex = /^([0-9A-F]{2}[:\-]){5}([0-9A-F]{2})$/;
     if (!macRegex.test(mac)) {
       alert("Please enter a valid MAC address (e.g., AA:BB:CC:DD:EE:FF)");
       return;
     }
 
-    if (phones.some((p) => p.macAddress === mac)) {
-      alert("This MAC address already exists");
-      return;
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/phones", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ mac_address: mac, model: newModel }),
+      });
+
+      if (res.status === 409) {
+        alert("This MAC address already exists");
+        return;
+      }
+      if (!res.ok) throw new Error();
+
+      setNewMac("");
+      await fetchPhones();
+    } catch {
+      alert("Failed to add phone");
     }
-
-    const phone: PhoneEntry = {
-      id: crypto.randomUUID(),
-      macAddress: mac,
-      model: newModel,
-      assignedTo: "",
-      extension: "",
-      status: "available",
-    };
-
-    setPhones([...phones, phone]);
-    setNewMac("");
   }
 
-  function removePhone(id: string) {
-    setPhones(phones.filter((p) => p.id !== id));
+  async function removePhone(id: string) {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/phones?id=${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) throw new Error();
+      await fetchPhones();
+    } catch {
+      alert("Failed to delete phone");
+    }
   }
 
   function startEdit(phone: PhoneEntry) {
     setEditingId(phone.id);
     setEditValues({
-      assignedTo: phone.assignedTo,
-      extension: phone.extension,
+      assigned_to: phone.assigned_to,
+      assigned_extension: phone.assigned_extension,
       status: phone.status,
     });
   }
 
-  function saveEdit(id: string) {
-    setPhones(
-      phones.map((p) =>
-        p.id === id ? { ...p, ...editValues } : p
-      )
-    );
-    setEditingId(null);
-    setEditValues({});
+  async function saveEdit(id: string) {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/phones", {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ id, ...editValues }),
+      });
+      if (!res.ok) throw new Error();
+      setEditingId(null);
+      setEditValues({});
+      await fetchPhones();
+    } catch {
+      alert("Failed to save changes");
+    }
   }
 
-  if (!authenticated) {
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="grid-floor flex min-h-screen items-center justify-center">
+        <div className="text-neon-cyan">Loading...</div>
+      </div>
+    );
+  }
+
+  // Not logged in
+  if (!user) {
     return (
       <div className="grid-floor flex min-h-screen items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="rounded-xl border border-dark-border bg-dark-card p-8 text-center">
             <Logo size={60} className="mx-auto mb-6" />
-            <h1 className="mb-6 text-xl font-bold text-white">Admin Access</h1>
-            <input
-              type="password"
-              placeholder="Enter admin password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              className="mb-4 w-full rounded-lg border border-dark-border bg-dark-bg px-4 py-3 text-white placeholder-gray-600 focus:border-neon-cyan focus:outline-none"
-            />
-            {authError && (
-              <p className="mb-4 text-sm text-red-400">{authError}</p>
-            )}
-            <button onClick={handleLogin} className="btn-neon w-full rounded-lg">
-              Login
+            <h1 className="mb-4 text-xl font-bold text-white">Admin Access</h1>
+            <p className="mb-6 text-sm text-gray-400">
+              You need to sign in to access the admin panel.
+            </p>
+            <button
+              onClick={() => router.push("/login")}
+              className="btn-neon w-full rounded-lg"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Not an admin
+  if (!isAdmin) {
+    return (
+      <div className="grid-floor flex min-h-screen items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          <div className="rounded-xl border border-dark-border bg-dark-card p-8 text-center">
+            <Logo size={60} className="mx-auto mb-6" />
+            <h1 className="mb-4 text-xl font-bold text-white">Access Denied</h1>
+            <p className="mb-6 text-sm text-gray-400">
+              Your account does not have admin privileges.
+            </p>
+            <button
+              onClick={() => router.push("/")}
+              className="btn-neon w-full rounded-lg"
+            >
+              Back to Home
             </button>
           </div>
         </div>
@@ -124,12 +194,15 @@ export default function AdminPage() {
               Manage MAC addresses and phone assignments
             </p>
           </div>
-          <button
-            onClick={() => setAuthenticated(false)}
-            className="text-sm text-gray-500 hover:text-neon-pink"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">{user.email}</span>
+            <button
+              onClick={signOut}
+              className="text-sm text-gray-500 hover:text-neon-pink"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Add Phone */}
@@ -175,7 +248,13 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {phones.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-600">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : phones.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-gray-600">
                       No phones added yet. Add MAC addresses above to get started.
@@ -185,22 +264,22 @@ export default function AdminPage() {
                   phones.map((phone) => (
                     <tr key={phone.id} className="border-b border-dark-border last:border-0">
                       <td className="px-6 py-4 font-mono text-neon-pink">
-                        {phone.macAddress}
+                        {phone.mac_address}
                       </td>
                       <td className="px-6 py-4 text-gray-300">{phone.model}</td>
                       <td className="px-6 py-4">
                         {editingId === phone.id ? (
                           <input
                             type="text"
-                            value={editValues.assignedTo || ""}
+                            value={editValues.assigned_to || ""}
                             onChange={(e) =>
-                              setEditValues({ ...editValues, assignedTo: e.target.value })
+                              setEditValues({ ...editValues, assigned_to: e.target.value })
                             }
                             className="w-full rounded border border-dark-border bg-dark-bg px-2 py-1 text-white focus:border-neon-cyan focus:outline-none"
                           />
                         ) : (
                           <span className="text-gray-300">
-                            {phone.assignedTo || "-"}
+                            {phone.assigned_to || "-"}
                           </span>
                         )}
                       </td>
@@ -208,15 +287,15 @@ export default function AdminPage() {
                         {editingId === phone.id ? (
                           <input
                             type="text"
-                            value={editValues.extension || ""}
+                            value={editValues.assigned_extension || ""}
                             onChange={(e) =>
-                              setEditValues({ ...editValues, extension: e.target.value })
+                              setEditValues({ ...editValues, assigned_extension: e.target.value })
                             }
                             className="w-32 rounded border border-dark-border bg-dark-bg px-2 py-1 text-white focus:border-neon-cyan focus:outline-none"
                           />
                         ) : (
                           <span className="text-gray-300">
-                            {phone.extension || "-"}
+                            {phone.assigned_extension || "-"}
                           </span>
                         )}
                       </td>
