@@ -19,7 +19,7 @@ export default function AdminPage() {
 
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
   const [newMac, setNewMac] = useState("");
-  const [newModel, setNewModel] = useState("Yealink T54W");
+  const [newModel, setNewModel] = useState("Standard");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<PhoneEntry>>({});
 
@@ -150,9 +150,9 @@ export default function AdminPage() {
               onChange={(e) => setNewModel(e.target.value)}
               className="rounded-lg border border-dark-border bg-dark-bg px-4 py-2 text-white focus:border-neon-cyan focus:outline-none"
             >
-              <option>Yealink T54W</option>
-              <option>Yealink T57W</option>
-              <option>Yealink T46U</option>
+              <option>Standard</option>
+              <option>Professional</option>
+              <option>Executive</option>
             </select>
             <button onClick={addPhone} className="btn-neon btn-neon-cyan rounded-lg">
               Add Phone
