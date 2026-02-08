@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Moosephone | Pre-Configured Cloud Phones",
   description:
-    "Moosephone delivers pre-configured Yealink cloud phones ready to plug in and go. Select your phones, configure your extensions, and we handle the rest.",
+    "Moosephone delivers pre-configured Yealink cloud phones ready to use out of the box. Select your phones, configure your extensions, and we handle the rest.",
   keywords: ["cloud phone", "yealink", "voip", "business phone", "pre-configured"],
 };
 

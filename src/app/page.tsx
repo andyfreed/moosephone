@@ -17,10 +17,10 @@ export default function Home() {
           MOOSEPHONE
         </h1>
         <p className="mb-6 text-lg font-medium tracking-widest text-neon-cyan glow-cyan sm:text-xl">
-          CLOUD PHONES. PLUG IN. GO.
+          CLOUD PHONES. MADE SIMPLE.
         </p>
         <p className="mb-10 max-w-xl text-gray-400">
-          Pre-configured Yealink phones delivered to your door. Just plug in the ethernet cable
+          Pre-configured Yealink phones delivered to your door. Connect to your network
           and start making calls. No technical setup required.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -42,7 +42,7 @@ export default function Home() {
           {[
             {
               title: "Zero Config",
-              desc: "Phones arrive pre-configured with your extensions, voicemail, and settings. Plug in and go.",
+              desc: "Phones arrive pre-configured with your extensions, voicemail, and settings. Ready out of the box.",
               icon: (
                 <svg className="h-8 w-8 text-neon-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
