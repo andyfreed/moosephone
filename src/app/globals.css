@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-neon-pink: #ff2d95;
+  --color-neon-cyan: #00e5ff;
+  --color-neon-purple: #b026ff;
+  --color-dark-bg: #0a0a0f;
+  --color-dark-card: #12121a;
+  --color-dark-border: #1e1e2e;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  background: var(--color-dark-bg);
+  color: #e0e0e0;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Neon glow utilities */
+.glow-pink {
+  text-shadow: 0 0 10px #ff2d95, 0 0 20px #ff2d95, 0 0 40px #ff2d95;
+}
+
+.glow-cyan {
+  text-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 40px #00e5ff;
+}
+
+.box-glow-pink {
+  box-shadow: 0 0 15px rgba(255, 45, 149, 0.3), 0 0 30px rgba(255, 45, 149, 0.1);
+}
+
+.box-glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3), 0 0 30px rgba(0, 229, 255, 0.1);
+}
+
+/* Grid floor effect */
+.grid-floor {
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Neon button */
+.btn-neon {
+  position: relative;
+  padding: 0.75rem 2rem;
+  border: 2px solid #ff2d95;
+  color: #ff2d95;
+  background: transparent;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-neon:hover {
+  background: #ff2d95;
+  color: #0a0a0f;
+  box-shadow: 0 0 20px rgba(255, 45, 149, 0.5), 0 0 40px rgba(255, 45, 149, 0.2);
+}
+
+.btn-neon-cyan {
+  border-color: #00e5ff;
+  color: #00e5ff;
+}
+
+.btn-neon-cyan:hover {
+  background: #00e5ff;
+  color: #0a0a0f;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.5), 0 0 40px rgba(0, 229, 255, 0.2);
+}
+
+/* Animated gradient border */
+@keyframes borderGlow {
+  0%, 100% { border-color: #ff2d95; }
+  50% { border-color: #00e5ff; }
+}
+
+.animate-border-glow {
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+/* Star twinkle effect for hero background */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
