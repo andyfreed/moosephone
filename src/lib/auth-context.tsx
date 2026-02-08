@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseClient();
     const { data } = await supabase
       .from("profiles")
-      .select("is_admin")
+      .select("*")
       .eq("id", userId)
       .single();
     setIsAdmin(data?.is_admin ?? false);
