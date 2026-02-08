@@ -20,12 +20,13 @@ async function checkAdmin(req: NextRequest): Promise<boolean> {
   if (error || !user) return false;
 
   const adminSupabase = getSupabase();
-  const { data: profile } = await adminSupabase
+  const { data } = await adminSupabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
+  const profile = data as { is_admin: boolean } | null;
   return profile?.is_admin === true;
 }
 

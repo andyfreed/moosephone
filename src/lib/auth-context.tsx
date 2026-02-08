@@ -34,7 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select("*")
       .eq("id", userId)
       .single();
-    setIsAdmin(data?.is_admin ?? false);
+    const profile = data as { is_admin: boolean } | null;
+    setIsAdmin(profile?.is_admin ?? false);
   }
 
   useEffect(() => {
