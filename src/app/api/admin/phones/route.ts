@@ -22,7 +22,7 @@ async function checkAdmin(req: NextRequest): Promise<boolean> {
   const adminSupabase = getSupabase();
   const { data: profile } = await adminSupabase
     .from("profiles")
-    .select("is_admin")
+    .select("*")
     .eq("id", user.id)
     .single();
 
