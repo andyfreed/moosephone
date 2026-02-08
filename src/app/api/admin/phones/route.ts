@@ -1,15 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
-function checkAuth(req: NextRequest) {
+async function checkAdmin(req: NextRequest): Promise<boolean> {
   const authHeader = req.headers.get("authorization");
-  const password = process.env.ADMIN_PASSWORD || "mooseadmin";
-  return authHeader === `Bearer ${password}`;
+  if (!authHeader?.startsWith("Bearer ")) return false;
+
+  const token = authHeader.slice(7);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return false;
+
+  const supabase = createClient<Database>(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return false;
+
+  const adminSupabase = getSupabase();
+  const { data: profile } = await adminSupabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  return profile?.is_admin === true;
 }
 
 // GET all phones
 export async function GET(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!(await checkAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,7 +50,7 @@ export async function GET(req: NextRequest) {
 
 // POST - add a phone
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!(await checkAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -58,7 +80,7 @@ export async function POST(req: NextRequest) {
 
 // PUT - update a phone
 export async function PUT(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!(await checkAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -91,7 +113,7 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - remove a phone
 export async function DELETE(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!(await checkAdmin(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

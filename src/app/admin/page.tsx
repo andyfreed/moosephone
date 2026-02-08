@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { useAuth } from "@/lib/auth-context";
 
 interface PhoneEntry {
   id: string;
@@ -13,9 +15,8 @@ interface PhoneEntry {
 }
 
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
+  const { user, isAdmin, loading: authLoading, signOut } = useAuth();
+  const router = useRouter();
 
   const [phones, setPhones] = useState<PhoneEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,17 +25,21 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<PhoneEntry>>({});
 
-  const authHeaders = useCallback(
-    () => ({ Authorization: `Bearer ${password}`, "Content-Type": "application/json" }),
-    [password]
-  );
+  const getAuthHeaders = useCallback(async () => {
+    const { getSupabaseClient } = await import("@/lib/supabase");
+    const supabase = getSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return {
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      "Content-Type": "application/json",
+    };
+  }, []);
 
-  async function fetchPhones(pwd: string) {
+  const fetchPhones = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/phones", {
-        headers: { Authorization: `Bearer ${pwd}` },
-      });
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/phones", { headers });
       if (!res.ok) throw new Error("Failed to load phones");
       const data = await res.json();
       setPhones(data);
@@ -43,26 +48,13 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [getAuthHeaders]);
 
-  async function handleLogin() {
-    setAuthError("");
-    try {
-      const res = await fetch("/api/admin/phones", {
-        headers: { Authorization: `Bearer ${password}` },
-      });
-      if (res.status === 401) {
-        setAuthError("Invalid password");
-        return;
-      }
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setPhones(data);
-      setAuthenticated(true);
-    } catch {
-      setAuthError("Failed to connect");
+  useEffect(() => {
+    if (!authLoading && user && isAdmin) {
+      fetchPhones();
     }
-  }
+  }, [authLoading, user, isAdmin, fetchPhones]);
 
   async function addPhone() {
     const mac = newMac.trim().toUpperCase();
@@ -75,9 +67,10 @@ export default function AdminPage() {
     }
 
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/phones", {
         method: "POST",
-        headers: authHeaders(),
+        headers,
         body: JSON.stringify({ mac_address: mac, model: newModel }),
       });
 
@@ -88,7 +81,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error();
 
       setNewMac("");
-      await fetchPhones(password);
+      await fetchPhones();
     } catch {
       alert("Failed to add phone");
     }
@@ -96,12 +89,13 @@ export default function AdminPage() {
 
   async function removePhone(id: string) {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch(`/api/admin/phones?id=${id}`, {
         method: "DELETE",
-        headers: authHeaders(),
+        headers,
       });
       if (!res.ok) throw new Error();
-      await fetchPhones(password);
+      await fetchPhones();
     } catch {
       alert("Failed to delete phone");
     }
@@ -118,40 +112,69 @@ export default function AdminPage() {
 
   async function saveEdit(id: string) {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/phones", {
         method: "PUT",
-        headers: authHeaders(),
+        headers,
         body: JSON.stringify({ id, ...editValues }),
       });
       if (!res.ok) throw new Error();
       setEditingId(null);
       setEditValues({});
-      await fetchPhones(password);
+      await fetchPhones();
     } catch {
       alert("Failed to save changes");
     }
   }
 
-  if (!authenticated) {
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="grid-floor flex min-h-screen items-center justify-center">
+        <div className="text-neon-cyan">Loading...</div>
+      </div>
+    );
+  }
+
+  // Not logged in
+  if (!user) {
     return (
       <div className="grid-floor flex min-h-screen items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="rounded-xl border border-dark-border bg-dark-card p-8 text-center">
             <Logo size={60} className="mx-auto mb-6" />
-            <h1 className="mb-6 text-xl font-bold text-white">Admin Access</h1>
-            <input
-              type="password"
-              placeholder="Enter admin password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              className="mb-4 w-full rounded-lg border border-dark-border bg-dark-bg px-4 py-3 text-white placeholder-gray-600 focus:border-neon-cyan focus:outline-none"
-            />
-            {authError && (
-              <p className="mb-4 text-sm text-red-400">{authError}</p>
-            )}
-            <button onClick={handleLogin} className="btn-neon w-full rounded-lg">
-              Login
+            <h1 className="mb-4 text-xl font-bold text-white">Admin Access</h1>
+            <p className="mb-6 text-sm text-gray-400">
+              You need to sign in to access the admin panel.
+            </p>
+            <button
+              onClick={() => router.push("/login")}
+              className="btn-neon w-full rounded-lg"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Not an admin
+  if (!isAdmin) {
+    return (
+      <div className="grid-floor flex min-h-screen items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          <div className="rounded-xl border border-dark-border bg-dark-card p-8 text-center">
+            <Logo size={60} className="mx-auto mb-6" />
+            <h1 className="mb-4 text-xl font-bold text-white">Access Denied</h1>
+            <p className="mb-6 text-sm text-gray-400">
+              Your account does not have admin privileges.
+            </p>
+            <button
+              onClick={() => router.push("/")}
+              className="btn-neon w-full rounded-lg"
+            >
+              Back to Home
             </button>
           </div>
         </div>
@@ -171,12 +194,15 @@ export default function AdminPage() {
               Manage MAC addresses and phone assignments
             </p>
           </div>
-          <button
-            onClick={() => { setAuthenticated(false); setPassword(""); }}
-            className="text-sm text-gray-500 hover:text-neon-pink"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">{user.email}</span>
+            <button
+              onClick={signOut}
+              className="text-sm text-gray-500 hover:text-neon-pink"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Add Phone */}
