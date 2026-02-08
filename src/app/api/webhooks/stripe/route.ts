@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { getSupabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -16,23 +17,32 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
+    const supabase = getSupabase();
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        // TODO: Store order in database
-        // For now, log the order details
-        console.log("New order:", {
-          sessionId: session.id,
-          customerEmail: session.customer_details?.email,
-          model: session.metadata?.model,
-          quantity: session.metadata?.quantity,
-          extensions: session.metadata?.extensions,
-        });
+        const orderId = session.metadata?.order_id;
+
+        if (orderId) {
+          await supabase
+            .from("orders")
+            .update({
+              status: "paid",
+              stripe_session_id: session.id,
+              stripe_subscription_id: session.subscription as string,
+              customer_email: session.customer_details?.email ?? null,
+            })
+            .eq("id", orderId);
+        }
         break;
       }
       case "customer.subscription.deleted": {
         const subscription = event.data.object;
-        console.log("Subscription cancelled:", subscription.id);
+        await supabase
+          .from("orders")
+          .update({ status: "pending" })
+          .eq("stripe_subscription_id", subscription.id);
         break;
       }
       default:

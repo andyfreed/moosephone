@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { getSupabase } from "@/lib/supabase";
 import { PHONE_MODELS, type PhoneExtension, type PhoneModelId } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
@@ -27,6 +28,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const totalPrice = phone.priceMonthly * quantity;
+
+    // Create pending order in Supabase
+    const supabase = getSupabase();
+    const { data: order, error: dbError } = await supabase
+      .from("orders")
+      .insert({
+        model,
+        quantity,
+        extensions,
+        price_per_phone: phone.priceMonthly,
+        total_price: totalPrice,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (dbError) {
+      console.error("DB error creating order:", dbError);
+      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
     const session = await getStripe().checkout.sessions.create({
@@ -47,13 +70,19 @@ export async function POST(req: NextRequest) {
         },
       ],
       metadata: {
+        order_id: order.id,
         model,
         quantity: String(quantity),
-        extensions: JSON.stringify(extensions),
       },
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/configure?model=${model}`,
     });
+
+    // Store stripe session ID on the order
+    await supabase
+      .from("orders")
+      .update({ stripe_session_id: session.id })
+      .eq("id", order.id);
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
