@@ -90,7 +90,7 @@ export async function PUT(req: NextRequest) {
     id: string;
     assigned_to?: string;
     assigned_extension?: string;
-    status?: string;
+    status?: "available" | "assigned" | "active";
   };
 
   if (!id) {
