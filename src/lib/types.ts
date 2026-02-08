@@ -27,25 +27,25 @@ export interface PhoneInventory {
 
 export const PHONE_MODELS = [
   {
-    id: "yealink-t54w",
-    name: "Yealink T54W",
-    description: "16-line mid-level IP phone with 4.3\" color LCD and built-in Wi-Fi/Bluetooth",
-    priceMonthly: 29.99,
-    image: "/images/yealink-t54w.png",
-  },
-  {
-    id: "yealink-t57w",
-    name: "Yealink T57W",
-    description: "16-line premium IP phone with 7\" adjustable color touch screen",
-    priceMonthly: 39.99,
-    image: "/images/yealink-t57w.png",
-  },
-  {
-    id: "yealink-t46u",
-    name: "Yealink T46U",
-    description: "16-line classic IP phone with 4.3\" color LCD and dual USB ports",
+    id: "standard",
+    name: "Standard",
+    description: "Essential cloud phone with HD audio, color display, and Wi-Fi connectivity",
     priceMonthly: 24.99,
-    image: "/images/yealink-t46u.png",
+    image: "/images/phone-standard.png",
+  },
+  {
+    id: "professional",
+    name: "Professional",
+    description: "Advanced cloud phone with large color display, Wi-Fi, and Bluetooth",
+    priceMonthly: 29.99,
+    image: "/images/phone-professional.png",
+  },
+  {
+    id: "executive",
+    name: "Executive",
+    description: "Premium cloud phone with 7\" touch screen, Wi-Fi, Bluetooth, and expanded line support",
+    priceMonthly: 39.99,
+    image: "/images/phone-executive.png",
   },
 ] as const;
 

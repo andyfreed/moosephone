@@ -12,7 +12,7 @@ function ConfigureForm() {
   const [selectedModel, setSelectedModel] = useState<PhoneModelId>(
     preselectedModel && PHONE_MODELS.some((m) => m.id === preselectedModel)
       ? preselectedModel
-      : "yealink-t54w"
+      : "standard"
   );
   const [quantity, setQuantity] = useState(1);
   const [extensions, setExtensions] = useState<PhoneExtension[]>([

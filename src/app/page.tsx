@@ -20,7 +20,7 @@ export default function Home() {
           CLOUD PHONES. MADE SIMPLE.
         </p>
         <p className="mb-10 max-w-xl text-gray-400">
-          Pre-configured Yealink phones delivered to your door. Connect to your network
+          Pre-configured cloud phones delivered to your door. Connect to your network
           and start making calls. No technical setup required.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
@@ -51,7 +51,7 @@ export default function Home() {
             },
             {
               title: "Enterprise Hardware",
-              desc: "Yealink phones with HD audio, color displays, Wi-Fi, Bluetooth, and all the features you need.",
+              desc: "HD audio, color displays, Wi-Fi, Bluetooth, and all the features your business needs.",
               icon: (
                 <svg className="h-8 w-8 text-neon-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
