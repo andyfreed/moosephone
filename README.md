@@ -20,16 +20,14 @@ Open http://localhost:3000
 
 ## Environment variables
 
-Create a `.env.local` with:
+Set these in your deployment environment (Vercel). Do not commit secrets.
 
-```
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-STRIPE_SECRET_KEY=your-stripe-secret-key
-STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
-```
+- NEXT_PUBLIC_BASE_URL
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
 
 ## Scripts
 
