@@ -24,6 +24,7 @@ export interface Database {
           is_admin?: boolean;
           updated_at?: string;
         };
+        Relationships: [];
       };
       orders: {
         Row: {
@@ -67,6 +68,7 @@ export interface Database {
           customer_email?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       phones: {
         Row: {
@@ -101,8 +103,21 @@ export interface Database {
           status?: "available" | "assigned" | "active";
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "phones_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 

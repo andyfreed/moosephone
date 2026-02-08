@@ -20,12 +20,13 @@ async function checkAdmin(req: NextRequest): Promise<boolean> {
   if (error || !user) return false;
 
   const adminSupabase = getSupabase();
-  const { data: profile } = await adminSupabase
+  const { data } = await adminSupabase
     .from("profiles")
-    .select("is_admin")
+    .select("*")
     .eq("id", user.id)
     .single();
 
+  const profile = data as { is_admin: boolean } | null;
   return profile?.is_admin === true;
 }
 
@@ -89,7 +90,7 @@ export async function PUT(req: NextRequest) {
     id: string;
     assigned_to?: string;
     assigned_extension?: string;
-    status?: string;
+    status?: "available" | "assigned" | "active";
   };
 
   if (!id) {
